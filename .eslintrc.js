@@ -6,6 +6,9 @@ module.exports = {
 		warnOnUnsupportedTypeScriptVersion: false,
 	},
 	settings: {
+		'import/resolver': {
+			node: { paths: ['.', 'src'], extensions: ['.js', '.jsx', '.ts', '.tsx'] },
+		},
 		react: {
 			version: 'detect',
 		},

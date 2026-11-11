@@ -28,7 +28,7 @@ export const RadioGroup = (props: RadioGroupProps) => {
 					<Spacing size={4} />
 				</>
 			)}
-			<div className={styles.group}>
+			<div className={styles.group} role='radiogroup' aria-label={title}>
 				{options.map((option) => (
 					<Option
 						key={option.value}
