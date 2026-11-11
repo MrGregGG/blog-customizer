@@ -1,32 +1,61 @@
 .container {
-  position: fixed;
-  left: 0;
-  height: 100%;
-  width: 616px;
-  transform: translate(-616px);
-  transition: transform 0.5s ease;
-  overflow: scroll;
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 20;
+	width: 616px;
+	height: 100%;
+	overflow: scroll;
+	overflow: auto;
+	background: #ffffff;
+	transform: translate(-616px);
+	transition: transform 0.5s ease;
 }
 
 .container_open {
-  transform: translate(0);
+	transform: translate(0);
 }
 
 .form {
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  width: 616px;
-  height: auto;
-  min-height: 100%;
-  padding: 50px 31px;
-  flex-shrink: 0;
-  border-right: 1px solid #000;
-  background-color: #fff;
+	display: flex;
+	flex-shrink: 0;
+	flex-direction: column;
+	box-sizing: border-box;
+	width: 616px;
+	height: auto;
+	min-height: 100%;
+	padding: 50px 31px;
+	background-color: #ffffff;
+	border-right: 1px solid #000000;
 }
 
 .bottomContainer {
-  display: flex;
-  justify-content: space-between;
-  margin-top: auto;
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	margin-top: auto;
+}
+
+.form > * {
+	flex-shrink: 0;
+}
+
+@media (width <= 716px) {
+	.container {
+		width: calc(100vw - 60px);
+		transform: translateX(-100%);
+	}
+
+	.container_open {
+		transform: translateX(0);
+	}
+
+	.form {
+		width: 100%;
+		padding: 30px 16px;
+	}
+
+	.bottomContainer {
+		flex-wrap: wrap;
+	}
 }

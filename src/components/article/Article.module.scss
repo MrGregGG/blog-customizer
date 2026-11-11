@@ -1,18 +1,31 @@
 .article {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 72px 0 144px;
-  max-width: var(--container-width, auto);
-  margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	max-width: var(--container-width, auto);
+	margin: 0 auto;
+	padding: 72px 0 144px;
 }
 
 .titleDescription {
-  max-width: 550px;
+	max-width: 550px;
 }
 
 .image {
-  width: 100%;
-  height: auto;
+	width: 100%;
+	height: auto;
+}
+
+@media (width <= 1430px) {
+	.article {
+		width: calc(100% - 48px);
+	}
+}
+
+@media (width <= 716px) {
+	.article {
+		padding-top: 110px;
+		overflow-wrap: anywhere;
+	}
 }

@@ -11,7 +11,7 @@ export default meta;
 type Story = StoryObj<typeof Select>;
 
 export const SelectStory: Story = {
-	render: () => {
+	render: function Story() {
 		const options = [
 			{ title: '1 опция', value: '1 опция', className: '' },
 			{ title: '2 опция', value: '2 опция', className: '' },

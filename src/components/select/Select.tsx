@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import type { MouseEventHandler } from 'react';
+import { useState, useRef, useId } from 'react';
+
 import clsx from 'clsx';
 import { OptionType } from 'src/constants/articleProps';
 import { Text } from 'components/text';
@@ -7,7 +7,7 @@ import { Spacing } from 'components/spacing';
 import arrowDown from 'src/images/arrow-down.svg';
 import { Option } from './Option';
 import { isFontFamilyClass } from './helpers/isFontFamilyClass';
-import { useEnterSubmit } from './hooks/useEnterSubmit';
+
 import { useOutsideClickClose } from './hooks/useOutsideClickClose';
 
 import styles from './Select.module.scss';
@@ -25,7 +25,12 @@ export const Select = (props: SelectProps) => {
 	const { options, placeholder, selected, onChange, onClose, title } = props;
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const rootRef = useRef<HTMLDivElement>(null);
-	const placeholderRef = useRef<HTMLDivElement>(null);
+	const placeholderRef = useRef<HTMLButtonElement>(null);
+	const listId = useId();
+	const [activeIndex, setActiveIndex] = useState(0);
+	const available = options.filter(
+		(option) => option.value !== selected?.value
+	);
 
 	useOutsideClickClose({
 		isOpen,
@@ -34,16 +39,14 @@ export const Select = (props: SelectProps) => {
 		onChange: setIsOpen,
 	});
 
-	useEnterSubmit({
-		placeholderRef,
-		onChange: setIsOpen,
-	});
-
 	const handleOptionClick = (option: OptionType) => {
 		setIsOpen(false);
 		onChange?.(option);
+		onClose?.();
+		placeholderRef.current?.focus();
 	};
-	const handlePlaceHolderClick: MouseEventHandler<HTMLDivElement> = () => {
+	const handlePlaceHolderClick = () => {
+		setActiveIndex(0);
 		setIsOpen((isOpen) => !isOpen);
 	};
 
@@ -67,18 +70,53 @@ export const Select = (props: SelectProps) => {
 					alt='иконка стрелочки'
 					className={clsx(styles.arrow, { [styles.arrow_open]: isOpen })}
 				/>
-				<div
+				<button
+					type='button'
+					role='combobox'
+					aria-label={title || placeholder}
+					aria-haspopup='listbox'
+					aria-expanded={isOpen}
+					aria-controls={isOpen ? listId : undefined}
+					aria-activedescendant={
+						isOpen ? `${listId}-${activeIndex}` : undefined
+					}
+					onKeyDown={(event) => {
+						if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+							event.preventDefault();
+							setActiveIndex((index) =>
+								!isOpen
+									? 0
+									: (index +
+											(event.key === 'ArrowDown' ? 1 : -1) +
+											available.length) %
+									  available.length
+							);
+							setIsOpen(true);
+						} else if (isOpen && (event.key === 'Enter' || event.key === ' ')) {
+							event.preventDefault();
+							if (available[activeIndex])
+								handleOptionClick(available[activeIndex]);
+						} else if (event.key === 'Escape' || event.key === 'Tab') {
+							setIsOpen(false);
+							if (isOpen) onClose?.();
+						} else if (
+							isOpen &&
+							(event.key === 'Home' || event.key === 'End')
+						) {
+							event.preventDefault();
+							setActiveIndex(event.key === 'Home' ? 0 : available.length - 1);
+						}
+					}}
 					className={clsx(
 						styles.placeholder,
 						styles[selected?.optionClassName || '']
 					)}
-					data-status={status}
 					data-selected={!!selected?.value}
 					onClick={handlePlaceHolderClick}
-					role='button'
 					tabIndex={0}
 					ref={placeholderRef}>
 					<Text
+						as='span'
 						family={
 							isFontFamilyClass(selected?.className)
 								? selected?.className
@@ -86,18 +124,23 @@ export const Select = (props: SelectProps) => {
 						}>
 						{selected?.title || placeholder}
 					</Text>
-				</div>
+				</button>
 				{isOpen && (
-					<ul className={styles.select} data-testid='selectDropdown'>
-						{options
-							.filter((option) => selected?.value !== option.value)
-							.map((option) => (
-								<Option
-									key={option.value}
-									option={option}
-									onClick={() => handleOptionClick(option)}
-								/>
-							))}
+					<ul
+						id={listId}
+						role='listbox'
+						aria-label={title || placeholder}
+						className={styles.select}
+						data-testid='selectDropdown'>
+						{available.map((option, index) => (
+							<Option
+								key={option.value}
+								id={`${listId}-${index}`}
+								active={index === activeIndex}
+								option={option}
+								onClick={() => handleOptionClick(option)}
+							/>
+						))}
 					</ul>
 				)}
 			</div>

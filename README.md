@@ -1,93 +1,111 @@
-# SP10_BlogCustomizer
+# Страница блога
 
+Учебный проект № 2 Яндекс Практикума: настройка оформления статьи через выдвижную панель. Реализован на исходном Blog Customizer starter.
 
+## Возможности
 
-## Getting started
+Стрелка открывает и закрывает панель; клик за её пределами закрывает её. Изменения в форме не затрагивают статью до нажатия «Применить». После применения панель закрывается. «Сбросить» сразу возвращает исходное оформление и значения полей. Неприменённый черновик сохраняется при закрытии панели, но не после перезагрузки страницы.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Настройки из `src/constants/articleProps.ts`:
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- Шрифты: Open Sans, Ubuntu, Cormorant Garamond, Days One, Merriweather.
+- Размер основного текста: 18px, 25px, 38px. Размеры заголовков сохраняются.
+- Цвет текста и фона: девять исходных цветов для каждого поля.
+- Максимальная ширина статьи: 1394px или 948px, с ограничением шириной экрана.
 
-## Add your files
+## Стек и требования
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+React 18, TypeScript 5, Webpack 5, SCSS Modules, Storybook 7. Playwright используется только для браузерных проверок. Сервер приложения, API и база данных не нужны.
 
+Рекомендуется Node.js 22.15.0 и npm. Нужен интернет для первоначальной установки пакетов; шрифты и изображение статьи хранятся локально. Файл `.nvmrc` фиксирует рекомендуемую версию Node.js.
+
+## Запуск в Windows / PowerShell
+
+Распакуйте архив. Откройте PowerShell именно в папке, где лежит `package.json`:
+
+```powershell
+cd "$HOME\Downloads\Blog_Customizer_Project2_READY"
+Test-Path .\package.json
+npm ci
+npm start
 ```
-cd existing_repo
-git remote add origin https://practicum.gitlab.yandexcloud.net/web-faculty-content/project-drafts/sp10_blogcustomizer.git
-git branch -M master
-git push -uf origin master
+
+`Test-Path` должен вывести `True`. Если папка находится в другом месте, укажите её фактический путь. В архиве нет дополнительной вложенной папки проекта.
+
+Откройте http://localhost:8080. Терминал должен оставаться открытым: работающий dev-сервер не завершает команду. Остановка — Ctrl+C. Если браузер не открылся автоматически, откройте адрес вручную. Если порт занят, остановите предыдущий сервер.
+
+Установка `npm ci` завершится возвратом приглашения PowerShell. Предупреждение Husky об отсутствии Git-репозитория при работе из ZIP не мешает запуску.
+
+## Команды
+
+| Команда                   | Назначение                             |
+| ------------------------- | -------------------------------------- |
+| `npm start`               | Dev-сервер, порт 8080                  |
+| `npm run build`           | Production-сборка в `dist/`            |
+| `npm run storybook`       | Storybook, порт 6006                   |
+| `npm run build-storybook` | Статическая сборка Storybook           |
+| `npm run typecheck`       | TypeScript без генерации файлов        |
+| `npm run lint`            | ESLint без изменения файлов            |
+| `npm run stylelint`       | Проверка SCSS                          |
+| `npm run format:check`    | Проверка форматирования исходников     |
+| `npm test`                | Все четыре статические проверки выше   |
+| `npm run lint:fix`        | Автоисправления ESLint                 |
+| `npm run stylelint:fix`   | Автоисправления Stylelint              |
+| `npm run format`          | Форматирование исходников              |
+| `npm run test:browser`    | 17 функциональных сценариев в Chromium |
+
+`npm test` — **статические проверки, не unit-тесты**. Браузерные сценарии запускаются отдельно:
+
+```powershell
+npx playwright install chromium
+npm run test:browser
 ```
 
-## Integrate with your tools
+Перед браузерными тестами остановите `npm start`: тест сам запускает и останавливает сервер на порту 8080. Тесты проверяют черновик и применение всех настроек, сброс, клики внутри и снаружи панели, повторные действия, клавиатуру, отсутствие перезагрузки и экраны 375px/320px.
 
-- [ ] [Set up project integrations](https://practicum.gitlab.yandexcloud.net/web-faculty-content/project-drafts/sp10_blogcustomizer/-/settings/integrations)
+## Архитектура
 
-## Collaborate with your team
+`App` в `src/index.tsx` хранит `appliedSettings: ArticleStateType` и задаёт пять CSS-переменных корневого контейнера: `--font-family`, `--font-size`, `--font-color`, `--bg-color`, `--container-width`.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+`ArticleParamsForm` хранит отдельный `draftSettings` и `isOpen`. Поля формы управляемые. Отправка формы вызывает `onApply(draftSettings)`, сброс обновляет черновик и вызывает `onApply(defaultArticleState)`. `Article` получает оформление через CSS-переменные, без прямой записи DOM-стилей.
 
-## Test and Deploy
+Внешние нажатия обрабатываются на `mousedown`, до удаления выбранного пункта списка из DOM. Нажатие внутри вложенного Select не закрывает панель. Закрытая панель не оставляет скрытые поля в порядке Tab.
 
-Use the built-in continuous integration in GitLab.
+Клавиатура: Tab переводит фокус, Enter/Space нажимают кнопки; в Select стрелки перемещают активный пункт, Home/End переходят к краям, Enter/Space выбирают, Escape закрывает список. Радиокнопки поддерживают стандартные стрелки и Space.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+## Структура
 
-***
+- `src/index.tsx` — приложение и применённое состояние.
+- `src/components/article/` — исходная статья.
+- `src/components/article-params-form/` — панель и черновик настроек.
+- `src/components/` — исходный UI-kit, стили, истории и обработчики.
+- `src/constants/articleProps.ts` — варианты настроек и значения по умолчанию.
+- `src/fonts/`, `src/images/` — локальные ресурсы.
+- `src/styles/` — глобальные стили.
+- `public/`, `webpack/`, `.storybook/` — HTML и конфигурация сборок.
+- `tests/browser.cjs` — браузерная проверка.
+- `PROJECT_REPORT.md` — результаты и ограничения проверки.
 
-# Editing this README
+## Загрузка на GitHub
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Удалённый репозиторий не указан; проект не опубликован и pull request не создан. Предпочтительно использовать свой репозиторий, созданный из стартера:
 
-## Suggestions for a good README
+```powershell
+git clone <URL_ВАШЕГО_РЕПОЗИТОРИЯ>
+cd <ПАПКА_РЕПОЗИТОРИЯ>
+git switch -c review
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Скопируйте содержимое готового архива в этот репозиторий с заменой соответствующих файлов. Не удаляйте `.git`, не переносите `node_modules` и `dist`. Если ветка `review` уже есть, используйте `git switch review` вместо создания новой.
 
-## Name
-Choose a self-explaining name for your project.
+```powershell
+npm ci
+npm test
+npm run build
+git status
+git add .
+git commit -m "feat: implement blog appearance customizer"
+git push -u origin review
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+На GitHub создайте pull request из `review` в основную ветку своего репозитория. Адрес, название основной ветки и права доступа проверьте в своём репозитории; force push не нужен.
